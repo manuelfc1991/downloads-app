@@ -56,7 +56,7 @@ try:
     from kivymd.uix.button import MDRaisedButton, MDIconButton, MDFloatingActionButton
     from kivymd.uix.textfield import MDTextField
     from kivymd.uix.label import MDLabel
-    from kivymd.uix.list import MDList, TwoLineAvatarIconListItem, IconLeftWidget, IconRightWidget, OneLineIconListItem
+    from kivymd.uix.list import MDList, TwoLineAvatarIconListItem, IconLeftWidget, IconRightWidget, OneLineIconListItem, OneLineListItem
     from kivymd.uix.progressbar import MDProgressBar
     from kivymd.uix.card import MDCard
     from kivymd.uix.dialog import MDDialog
@@ -252,13 +252,25 @@ if safe_start:
                     status TEXT, -- Pending, Downloading, Paused, Completed, Error
                     progress INTEGER DEFAULT 0,
                     file_path TEXT,
+                    format TEXT DEFAULT 'video', -- video (mp4), audio (mp3)
+                    quality TEXT DEFAULT 'best', -- best, 1080p, 720p, 480p
                     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
+            # Handle potential migration for existing users
+            try:
+                self.cursor.execute("ALTER TABLE downloads ADD COLUMN format TEXT DEFAULT 'video'")
+                self.cursor.execute("ALTER TABLE downloads ADD COLUMN quality TEXT DEFAULT 'best'")
+            except sqlite3.OperationalError:
+                # Columns probably already exist
+                pass
             self.conn.commit()
 
-        def add_task(self, url):
-            self.cursor.execute('INSERT INTO downloads (url, status, progress) VALUES (?, ?, ?)', (url, 'Pending', 0))
+        def add_task(self, url, format_type='video', quality='best'):
+            self.cursor.execute(
+                'INSERT INTO downloads (url, status, progress, format, quality) VALUES (?, ?, ?, ?, ?)', 
+                (url, 'Pending', 0, format_type, quality)
+            )
             self.conn.commit()
             return self.cursor.lastrowid
 
@@ -336,6 +348,13 @@ if safe_start:
             return active
 
         def _run_download(self, task_id, url, stop_event, on_progress, on_complete, on_error):
+            task_data = db.get_task(task_id)
+            # task format: (id, url, title, status, progress, file_path, format, quality, timestamp)
+            # Depending on DB schema index might shift, let's use named indexing if possible or be careful
+            # Current schema: 0:id, 1:url, 2:title, 3:status, 4:progress, 5:path, 6:format, 7:quality, 8:ts
+            dl_format = task_data[6] if len(task_data) > 6 else 'video'
+            dl_quality = task_data[7] if len(task_data) > 7 else 'best'
+
             folder = get_download_folder()
             os.makedirs(folder, exist_ok=True)
             
@@ -385,6 +404,24 @@ if safe_start:
                 'quiet': True,
                 'no_color': True,
             }
+
+            if dl_format == 'audio':
+                ydl_opts['format'] = 'bestaudio/best'
+                ydl_opts['postprocessors'] = [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192',
+                }]
+            else:
+                # Video handling
+                if dl_quality == '1080p':
+                    ydl_opts['format'] = 'bestvideo[height<=1080]+bestaudio/best'
+                elif dl_quality == '720p':
+                    ydl_opts['format'] = 'bestvideo[height<=720]+bestaudio/best'
+                elif dl_quality == '480p':
+                    ydl_opts['format'] = 'bestvideo[height<=480]+bestaudio/best'
+                else:
+                    ydl_opts['format'] = 'bestvideo+bestaudio/best'
 
             try:
                 if platform == 'android':
@@ -831,6 +868,8 @@ if safe_start:
             except Exception as e:
                 return ErrorApp(f"DB Init Error: {e}").build()
 
+            self.selected_format = "video"
+            self.selected_quality = "best"
             self.sm = MDScreenManager()
             
             # --- Splash Screen ---
@@ -843,13 +882,33 @@ if safe_start:
             # --- Screen 1: Home ---
             screen1 = MDBottomNavigationItem(name='screen1', text='Home', icon='home', on_tab_press=self.refresh_active)
             main_layout = MDBoxLayout(orientation='vertical', spacing=dp(15), padding=dp(15))
-            
+
             # Input Card (Improved Padding)
-            input_card = MDCard(orientation="vertical", padding=dp(20), spacing=dp(15), size_hint_y=None, height=dp(160), elevation=4, radius=[20])
+            input_card = MDCard(orientation="vertical", padding=dp(20), spacing=dp(15), size_hint_y=None, height=dp(210), elevation=4, radius=[20])
             
             input_card.add_widget(MDLabel(text="Add New Download", font_style="H6", theme_text_color="Primary", bold=True))
             self.url_input = MDTextField(hint_text="Paste Link Here", mode="fill", icon_right="link", radius=[10,10,0,0])
             input_card.add_widget(self.url_input)
+
+            # --- Format & Quality Selection Row ---
+            selection_row = MDBoxLayout(orientation="horizontal", spacing=dp(10), size_hint_y=None, height=dp(40))
+            
+            self.format_btn = MDRaisedButton(
+                text="Format: Video", 
+                size_hint_x=0.5, 
+                md_bg_color=(0.2, 0.2, 0.2, 1),
+                on_release=self.show_format_menu
+            )
+            self.quality_btn = MDRaisedButton(
+                text="Quality: Best", 
+                size_hint_x=0.5, 
+                md_bg_color=(0.2, 0.2, 0.2, 1),
+                on_release=self.show_quality_menu
+            )
+            
+            selection_row.add_widget(self.format_btn)
+            selection_row.add_widget(self.quality_btn)
+            input_card.add_widget(selection_row)
             
             add_btn = MDRaisedButton(text="DOWNLOAD", size_hint_x=1, elevation=2, font_size='16sp', on_release=self.add_download)
             input_card.add_widget(add_btn)
@@ -907,6 +966,56 @@ if safe_start:
             except Exception as e:
                 toast(f"Error: {e}")
 
+
+        def show_format_menu(self, instance):
+            from kivymd.uix.menu import MDDropdownMenu
+            menu_items = [
+                {
+                    "text": "Video (MP4)",
+                    "viewclass": "OneLineListItem",
+                    "on_release": lambda x="video": self.set_format(x),
+                },
+                {
+                    "text": "Audio (MP3)",
+                    "viewclass": "OneLineListItem",
+                    "on_release": lambda x="audio": self.set_format(x),
+                },
+            ]
+            self.format_menu = MDDropdownMenu(
+                caller=instance,
+                items=menu_items,
+                width_mult=4,
+            )
+            self.format_menu.open()
+
+        def set_format(self, format_type):
+            self.selected_format = format_type
+            self.format_btn.text = f"Format: {format_type.capitalize()}"
+            if hasattr(self, 'format_menu'):
+                self.format_menu.dismiss()
+
+        def show_quality_menu(self, instance):
+            from kivymd.uix.menu import MDDropdownMenu
+            qualities = ["Best", "1080p", "720p", "480p", "360p"]
+            menu_items = [
+                {
+                    "text": q,
+                    "viewclass": "OneLineListItem",
+                    "on_release": lambda x=q: self.set_quality(x),
+                } for q in qualities
+            ]
+            self.quality_menu = MDDropdownMenu(
+                caller=instance,
+                items=menu_items,
+                width_mult=4,
+            )
+            self.quality_menu.open()
+
+        def set_quality(self, quality):
+            self.selected_quality = quality.lower()
+            self.quality_btn.text = f"Quality: {quality}"
+            if hasattr(self, 'quality_menu'):
+                self.quality_menu.dismiss()
 
         # ... (on_start, add_download, refresh_active stay same or similiar) ...
         def on_start(self):
@@ -1010,7 +1119,7 @@ if safe_start:
                 return
 
             try:
-                task_id = db.add_task(url)
+                task_id = db.add_task(url, format_type=self.selected_format, quality=self.selected_quality)
                 self.url_input.text = ""
                 self.refresh_active()
                 toast("Added to downloads")

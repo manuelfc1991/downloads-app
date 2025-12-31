@@ -28,7 +28,7 @@ source.include_patterns = assets/*
 #source.exclude_patterns = license,images/*/*.jpg
 
 # (str) Application versioning (method 1)
-version = 1
+version = 3.7
 
 # (list) Application requirements
 # Start with basics - we'll add more later

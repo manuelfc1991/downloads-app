@@ -1,0 +1,5 @@
+kivy
+kivymd
+yt-dlp
+certifi
+requests

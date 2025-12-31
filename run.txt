@@ -1,0 +1,221 @@
+1. sudo apt install python3-full python3-venv
+
+2. python3 -m venv ~/buildozer-env
+
+3. source ~/buildozer-env/bin/activate
+
+4. pip install --upgrade pip
+
+5. pip install --upgrade cython
+
+6. pip install --upgrade buildozer
+
+7. buildozer --version
+
+8. buildozer android clean
+
+optional
+
+9. buildozer init
+
+10. buildozer -v android debug
+
+11. adb install bin/yourapp-0.1-debug.apk
+
+
+adb commands
+
+sudo apt install adb 
+
+
+
+#important codes to run app
+----------------------------
+
+# Update package list
+sudo apt update
+
+# Install Python 3
+sudo apt install python3
+
+# Install the compatibility package (makes 'python' work)
+sudo apt install python-is-python3
+
+
+python3 --version
+pip3 --version
+
+sudo apt update
+sudo apt install python3 python3-pip
+
+
+python3 -m venv venv
+source venv/bin/activate
+
+# 3. Install Kivy
+python3 -m pip install "kivy[base]"
+
+# 4. Test it
+python3 -c "import kivy; print('Kivy is ready!')"
+
+python3 -m pip install kivymd
+
+sudo apt-get install -y python3-dev build-essential git pkg-config cmake libgl1-mesa-dev libgles2-mesa-dev
+
+python3 -m pip install kivymd
+
+python3 -c "from kivymd.app import MDApp; print('KivyMD installed successfully')"
+
+python3 -m pip install "kivy[base]" kivymd
+
+python3 -m pip install --upgrade pip
+
+# Make sure your venv is activated
+cd /home/hplap/projects/downloadApp2
+source venv/bin/activate
+
+# Uninstall the master branch version
+pip uninstall kivymd -y
+
+pip install kivymd
+
+
+
+
+# 1. Navigate to project
+cd /home/hplap/projects/downloadApp2
+
+# 2. Activate virtual environment
+source venv/bin/activate
+
+# 3. Ensure KivyMD 1.2.0 is installed
+pip uninstall kivymd -y
+pip install kivymd==1.2.0
+
+# 4. Install yt-dlp
+pip install yt-dlp
+
+# 5. Create the config directory manually (temporary fix)
+mkdir -p ~/.config/downloader
+
+# 6. Run your app
+python main.py
+
+
+
+
+
+
+-------------------------
+
+nothing works
+
+sudo apt update
+sudo apt install -y software-properties-common
+
+
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt update
+
+
+sudo apt install -y \
+  python3.10 \
+  python3.10-venv \
+  python3.10-dev
+
+
+python3.10 --version
+
+rm -rf buildozer-env
+
+python3.10 -m venv buildozer-env
+
+source buildozer-env/bin/activate
+
+python --version
+
+ls -l buildozer-env/bin/python
+
+pip install --upgrade pip setuptools wheel
+pip install buildozer
+pip install "kivy[base]==2.3.0" kivymd==1.2.0
+
+pip install "Cython<3"
+
+
+
+
+
+
+
+
+
+
+sudo apt update
+sudo apt install -y software-properties-common
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt update
+
+
+sudo apt install -y \
+  python3.10 \
+  python3.10-venv \
+  python3.10-dev
+
+
+
+python3.10 --version
+# Python 3.10.x
+
+
+
+sudo apt install -y \
+  git zip unzip \
+  openjdk-17-jdk \
+  autoconf automake libtool \
+  pkg-config cmake \
+  libssl-dev libffi-dev \
+  liblzma-dev zlib1g-dev \
+  libncurses5-dev libsqlite3-dev \
+  libreadline-dev libbz2-dev \
+  libgdbm-dev libnss3-dev \
+  libgl1-mesa-dev
+
+
+java -version
+# OpenJDK 17
+
+
+cd ~/projects/downloadApp2
+
+python3.10 -m venv buildozer-env
+source buildozer-env/bin/activate
+
+
+python --version
+# Python 3.10.x
+
+
+pip install --upgrade pip setuptools wheel
+pip install "Cython<3" buildozer
+
+
+buildozer --version
+cython --version
+
+
+rm -rf .buildozer
+
+
+buildozer init
+
+
+[buildozer]
+log_level = 2
+
+[app]
+requirements = python3,kivy,kivymd
+android.api = 33
+android.ndk = 25b
+android.archs = arm64-v8a,armeabi-v7a
+

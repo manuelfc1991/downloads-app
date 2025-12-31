@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background (optional - remove rect for transparent background) -->
+  <rect width="512" height="512" fill="transparent"/>
+  
+  <!-- Download/Inbox Icon in White -->
+  <path fill="white" d="M448 160L384 64H128L64 160v288c0 26.5 21.5 48 48 48h288c26.5 0 48-21.5 48-48V160zM128 96h256l48 64H80l48-64zm272 352H112V192h288v256z"/>
+  
+  <!-- Arrow pointing down -->
+  <path fill="white" d="M256 416c-8.188 0-16.38-3.125-22.62-9.375l-96-96c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L224 306.8V224c0-17.69 14.33-32 32-32s32 14.31 32 32v82.8l41.38-41.38c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-96 96C272.4 412.9 264.2 416 256 416z"/>
+</svg>
